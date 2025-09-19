@@ -6,22 +6,21 @@ USE db1609_SistemaVendas;
 GO
 
 
-IF OBJECT_ID ('trg_AuditoriaInsercao', 'tr') IS NOT NULL DROP TRIGGER trg_AuditoriaInsercao;
+IF OBJECT_ID ('trg_AuditoriaInsercao', 'TR') IS NOT NULL DROP TRIGGER trg_AuditoriaInsercao;
 GO
-IF OBJECT_ID ('trg_AuditoriaAtualizacao', 'tr') IS NOT NULL DROP TRIGGER trg_AuditoriaAtualizacao;
+IF OBJECT_ID ('trg_AuditoriaAtualizacao', 'TR') IS NOT NULL DROP TRIGGER trg_AuditoriaAtualizacao;
 GO
-IF OBJECT_ID ('trg_AuditoriaExclusao', 'tr') IS NOT NULL DROP TRIGGER trg_AuditoriaExclusao;
-GO
+IF OBJECT_ID ('trg_AuditoriaExclusao', 'TR') IS NOT NULL DROP TRIGGER trg_AuditoriaExclusao;
 
-IF OBJECT_ID ('clientes', 'u') IS NOT NULL DROP TABLE clientes;
 GO
-IF OBJECT_ID ('produtos', 'u') IS NOT NULL DROP TABLE produtos;
+IF OBJECT_ID ('vendas', 'U') IS NOT NULL DROP TABLE vendas;
 GO
-IF OBJECT_ID ('vendas', 'u') IS NOT NULL DROP TABLE vendas;
+IF OBJECT_ID ('produtos', 'U') IS NOT NULL DROP TABLE produtos;
 GO
-IF OBJECT_ID ('Auditoria_vendas', 'u') IS NOT NULL DROP TABLE auditoria_vendas;
+IF OBJECT_ID ('Auditoria_vendas', 'U') IS NOT NULL DROP TABLE auditoria_vendas;
 GO
-
+IF OBJECT_ID ('clientes', 'U') IS NOT NULL DROP TABLE clientes;
+GO
 CREATE TABLE clientes(
 	cliente_id INT PRIMARY KEY,
 	nome_cliente VARCHAR (100) NOT NULL,
@@ -107,6 +106,9 @@ CREATE TRIGGER trg_AuditoriaExclusao
 	END;
 GO
 
+
+
+------ ETAPA DA IMPUTE DOS DADOS PARA TRIGGER
 INSERT INTO vendas (cliente_id, produto_id, quantidade, valor_total, data_venda) VALUES
 (4, 3, 3, 400.00,GETDATE());
 
@@ -114,32 +116,25 @@ UPDATE vendas SET valor_total = 450 WHERE cliente_id = 4;
 
 DELETE vendas WHERE cliente_id = 4 
 
+
+------ CONSULTA DA ETAPA DE IMPUTE DOS DADOS PARA TRIGGER
 SELECT * FROM Auditoria_vendas
-
-
-/* 
 
 
 --- VALOR TOTAL DE VENDAS POR CLIENTE
 SELECT c.nome_cliente AS Cliente, 
-	v.venda_id, 
-	v.quantidade, 
-	p.nome_produto, 
-	p.preco,
+	SUM(v.quantidade) AS Quantidade, 
+	p.nome_produto,
 	SUM(p.preco * v.quantidade) AS TotalGasto
 FROM vendas v
 JOIN produtos p ON v.produto_id = p.produto_id
 JOIN clientes c ON v.cliente_id = c.cliente_id
-GROUP BY C.nome_cliente
+GROUP BY C.nome_cliente, p.nome_produto
 ORDER BY TotalGasto DESC;
 
-
+--- QUAIS OS PRODUTOS COM MIOR QUANTIDADE MAIS VENDIDA
 SELECT TOP 3 p.nome_produto AS produto, SUM(v.quantidade) AS QUANTIDADEVENDIDA
 FROM Produtos p
 JOIN vendas v ON p.produto_id = v.produto_id 
 GROUP BY p.nome_produto
 ORDER BY  QUANTIDADEVENDIDA DESC;
-
-*/
-
-
